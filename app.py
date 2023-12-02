@@ -3,12 +3,13 @@ import json
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
-
+from flask_cors import CORS, cross_origin
+import uuid  
 
 load_dotenv()
 
-
 app = Flask(__name__)
+CORS(app)
 
 client = MongoClient(os.environ["DB_URL"])
 db = client["test"]
@@ -32,6 +33,7 @@ def medications():
     elif request.method == 'POST':
         try:
             data = request.json
+            data['_id'] = str(uuid.uuid4())
             new_medication = {**medication_model, **data}
             db.medications.insert_one(new_medication)
             return jsonify(new_medication), 201
@@ -41,8 +43,9 @@ def medications():
     elif request.method == 'PUT':
         try:
             data = request.json
-            db.medications.update_one({"_id": data["id"]}, {"$set": data})
-            updated_medication = db.medications.find_one({"_id": data["id"]})
+            medication_id = data["_id"]
+            db.medications.update_one({"_id": medication_id}, {"$set": data})
+            updated_medication = db.medications.find_one({"_id": medication_id})
             return jsonify(updated_medication), 200
         except Exception as e:
             return jsonify({"error": "Internal Server Error"}), 500
@@ -50,11 +53,12 @@ def medications():
     elif request.method == 'DELETE':
         try:
             data = request.json
-            db.medications.delete_one({"_id": data["id"]})
+            medication_id = data["_id"]
+            print(medication_id, "A")
+            db.medications.delete_one({"_id": medication_id})
             return "", 204
         except Exception as e:
-            return jsonify({"error": "Internal Server Error"}), 500
+            return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
-
