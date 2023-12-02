@@ -19,21 +19,17 @@ medication_model = {
     "counter": int
 }
 
-
 @app.route('/api/medications', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def medications():
     if request.method == 'GET':
-        # Get all medications
         try:
             medications = list(db.medications.find())
-            print(medications)
-            return json.dumps(medications, default=str), 200
+            return json.dumps(medications), 200
         except Exception as e:
             print(e)
             return jsonify({"error": "Internal Server Error"}), 500
 
     elif request.method == 'POST':
-        # Add a new medication
         try:
             data = request.json
             new_medication = {**medication_model, **data}
@@ -43,7 +39,6 @@ def medications():
             return jsonify({"error": str(e)}), 500
 
     elif request.method == 'PUT':
-        # Update a medication
         try:
             data = request.json
             db.medications.update_one({"_id": data["id"]}, {"$set": data})
@@ -53,7 +48,6 @@ def medications():
             return jsonify({"error": "Internal Server Error"}), 500
 
     elif request.method == 'DELETE':
-        # Remove a medication
         try:
             data = request.json
             db.medications.delete_one({"_id": data["id"]})
